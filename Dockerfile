@@ -7,4 +7,5 @@ RUN npm install -g @kilocode/cli
 
 ENV KILO_API_KEY=""
 
-CMD ["sh", "-c", "sleep infinity"]
+# Container qui reste vivant proprement
+CMD ["tail", "-f", "/dev/null"]
