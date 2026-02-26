@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  kilo:
+    build: .
+    container_name: kilo_code
+    environment:
+      KILO_API_KEY: ${KILO_API_KEY}
+    volumes:
+      - .:/app
+    tty: true
