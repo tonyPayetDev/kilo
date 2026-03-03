@@ -6,6 +6,8 @@ services:
     container_name: kilo_code
     environment:
       KILO_API_KEY: ${KILO_API_KEY}
+      COOLIFY_ACCESS_TOKEN: ${COOLIFY_ACCESS_TOKEN}
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PERSONAL_ACCESS_TOKEN}
     volumes:
       - .:/app
     tty: true
