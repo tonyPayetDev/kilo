@@ -10,4 +10,8 @@ services:
       GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PERSONAL_ACCESS_TOKEN}
     volumes:
       - .:/app
+      - kilo_skills:/app/.kilocode/skills
     tty: true
+
+volumes:
+  kilo_skills:
