@@ -95,7 +95,63 @@ Ce skill guide la création d'interfaces frontend distinctives et de production 
 - `animation-delay` pour séquencer
 - Physics-based animations (spring)
 
-### 4. Arrière-plans
+### 4. Récupération et intégration d'images externes
+
+Si une URL de site est transmise, récupérer automatiquement les images pour les intégrer :
+
+**Workflow de récupération :**
+```bash
+# 1. Identifier les images sur le site source
+curl -s "$URL" | grep -oE 'https?://[^"]+\.(jpg|jpeg|png|gif|webp)' | sort -u > images.txt
+
+# 2. Télécharger les images
+mkdir -p assets/images/external
+while read img; do
+  wget -q -P assets/images/external "$img"
+done < images.txt
+
+# 3. Optimiser les images (optionnel)
+# Utiliser sharp, imagemin ou squoosh pour réduire la taille
+```
+
+**Intégration dans le design :**
+- Analyser le sujet/thème des images récupérées
+- Adapter la palette de couleurs pour matcher les images
+- Utiliser les images comme :
+  - Hero backgrounds (avec overlay sombre pour le texte)
+  - Gallery/grid masonry
+  - Cards avec images en arrière-plan
+  - Thumbnails avec lazy loading
+
+**Attribution et droits :**
+- Vérifier les licences des images si usage commercial
+- Mentionner la source si nécessaire
+- Privilégier les images libres de droits (Unsplash, Pexels) comme fallback
+
+**Exemple d'intégration CSS :**
+```css
+.hero {
+  background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                    url('assets/images/external/hero.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+}
+```
+
+### 5. Arrière-plans
 
 **Créer atmosphère et profondeur :**
 - ❌ Pas de couleurs unies par défaut
@@ -139,13 +195,20 @@ background-image:
 
 ```
 1. /frontend-design          → Activer ce skill
-2. Choisir une direction      → Editorial, Cyberpunk, Brutalist, etc.
-3. Sélectionner typographie   → Google Fonts ou Adobe Fonts
-4. Définir le système couleur → OKLCH ou HSL, pas hex brut
-5. Concevoir le layout        → Grid CSS, pas juste flexbox
-6. Ajouter motion             → CSS animations ou Motion
-7. Tester responsive          → Mobile-first
+2. Récupérer images (si URL) → Télécharger et analyser les images externes
+3. Choisir une direction      → Editorial, Cyberpunk, Brutalist, etc.
+4. Sélectionner typographie   → Google Fonts ou Adobe Fonts
+5. Définir le système couleur → OKLCH ou HSL, matcher avec les images
+6. Concevoir le layout        → Grid CSS, pas juste flexbox
+7. Ajouter motion             → CSS animations ou Motion
+8. Tester responsive          → Mobile-first
 ```
+
+**Si une URL est fournie :**
+- Scraper les images du site source
+- Adapter la palette de couleurs aux images récupérées
+- Intégrer les images dans le design (hero, gallery, cards)
+- Optimiser les images pour le web
 
 ## Variables CSS Recommandées
 
