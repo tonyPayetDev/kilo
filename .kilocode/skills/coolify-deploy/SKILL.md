@@ -28,6 +28,9 @@ demander à l'utilisateur de les fournir :
 > 💡 **Où trouver ces valeurs ?**
 > - GitHub token : https://github.com/settings/tokens → "Generate new token (classic)" → scope `repo`
 > - Server/Project UUIDs : Interface Coolify → Settings → l'UUID est dans l'URL ou les infos du serveur/projet
+>
+> ⚠️ **Important : Utiliser un token CLASSIC, pas fine-grained !**
+> Les fine-grained tokens ne permettent pas de créer des repositories via l'API. Il faut obligatoirement un **Classic token** avec le scope `repo`.
 
 ---
 
@@ -191,6 +194,7 @@ SITE_EN_LIGNE: <url>
 | Problème | Solution |
 |----------|----------|
 | `git push` échoue avec 403 | Vérifier que le token a le scope `repo` |
+| `Resource not accessible by personal access token` | Le token est fine-grained. Créer un **Classic token** avec scope `repo` |
 | Coolify status `failed` | Consulter les logs avec `mcp__coolify__deployment` action `get` |
 | `fqdn` null dans Coolify | Utiliser le format sslip.io avec l'IP du serveur |
 | Site répond 502/504 | Le container démarre encore, attendre 30s et réessayer |
