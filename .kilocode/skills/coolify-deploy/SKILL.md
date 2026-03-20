@@ -12,32 +12,49 @@ description: >
 
 Déploie un dossier local sur Coolify en passant par un repo GitHub.
 
-## ⚙️ Variables d'environnement requises
+## ⚙️ Configuration automatique des variables
 
-Créer un fichier `/app/.env` avec ces variables :
+**Le skill charge automatiquement les variables depuis `/app/fichier.txt`** si elles ne sont pas déjà définies :
 
 ```bash
-# GitHub
-GITHUB_TOKEN=ghp_xxxx...                    # Classic PAT avec scope 'repo'
-GITHUB_USER=votre_username
+# Charger automatiquement depuis /app/fichier.txt
+if [ -f "/app/fichier.txt" ]; then
+  # Extraire le token GitHub (première ligne)
+  export GITHUB_TOKEN=$(head -1 /app/fichier.txt)
+  # Extraire le UUID Coolify (ligne avec uuid:)
+  export COOLIFY_SERVER_UUID=$(grep "uuid:" /app/fichier.txt | cut -d: -f2 | tr -d ' ')
+fi
 
-# Coolify
-COOLIFY_BASE_URL=http://IP:8000             # URL de votre instance Coolify
-COOLIFY_ACCESS_TOKEN=xx|xxxx...             # Token API Coolify (Settings → API)
-COOLIFY_SERVER_UUID=c4c0wo4...              # UUID du serveur (Settings → Servers)
+# Valeurs par défaut
+export GITHUB_USER="${GITHUB_USER:-tonyPayetDev}"
+export COOLIFY_BASE_URL="${COOLIFY_BASE_URL:-http://158.220.127.234:8000}"
+export COOLIFY_ACCESS_TOKEN="${COOLIFY_ACCESS_TOKEN:-32|EHh0msiQ6mFH6RdD3w7PRNMswA07HD3WXN7nZiW940ba2077}"
+```
+
+**Si le fichier n'existe pas**, créer `/app/fichier.txt` :
+```
+ghp_votre_token_github
+uuid: c4c0wo4cw8cswkwsooswcc8g
 ```
 
 > 💡 **Où trouver ces valeurs ?**
 > - **GitHub token** : https://github.com/settings/tokens → "Generate new token (classic)" → scope `repo`
-> - **Coolify Access Token** : Interface Coolify → Settings → API → Create New Token
-> - **Coolify Server UUID** : Interface Coolify → Settings → Servers → cliquer sur le serveur → UUID dans l'URL
+> - **Coolify Server UUID** : Interface Coolify → Settings → Servers → UUID dans l'URL
 >
 > ⚠️ **Important : Utiliser un token CLASSIC GitHub, pas fine-grained !**
-> Les fine-grained tokens ne permettent pas de créer des repositories via l'API.
 
 ---
 
-## Étapes d'exécution
+## Utilisation rapide
+
+```bash
+# Déployer un site (les variables sont chargées automatiquement)
+/app/.kilocode/skills/coolify-deploy/deploy.sh /app/mon-site
+```
+
+---
+
+## Étapes d'exécution détaillées
 
 ### 1. Identifier le dossier source
 
@@ -48,6 +65,15 @@ COOLIFY_SERVER_UUID=c4c0wo4...              # UUID du serveur (Settings → Serv
 ### 2. Vérifier les prérequis
 
 ```bash
+# Charger les variables automatiquement
+if [ -f "/app/fichier.txt" ]; then
+  export GITHUB_TOKEN=$(head -1 /app/fichier.txt)
+  export COOLIFY_SERVER_UUID=$(grep "uuid:" /app/fichier.txt | cut -d: -f2 | tr -d ' ')
+fi
+export GITHUB_USER="${GITHUB_USER:-tonyPayetDev}"
+export COOLIFY_BASE_URL="${COOLIFY_BASE_URL:-http://158.220.127.234:8000}"
+export COOLIFY_ACCESS_TOKEN="${COOLIFY_ACCESS_TOKEN:-32|EHh0msiQ6mFH6RdD3w7PRNMswA07HD3WXN7nZiW940ba2077}"
+
 # Vérifier que git et curl sont disponibles
 command -v git >/dev/null 2>&1 || { echo "ERREUR: git non installé"; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo "ERREUR: curl non installé"; exit 1; }
@@ -69,11 +95,9 @@ CMD ["nginx", "-g", "daemon off;"]
 ### 4. Initialiser git et pousser sur GitHub
 
 ```bash
-# Variables (remplacer par les valeurs de l'utilisateur)
-GITHUB_TOKEN="<GITHUB_TOKEN>"
-GITHUB_USER="<GITHUB_USER>"
-REPO_NAME="<nom-du-dossier>"
-SITE_DIR="<SITE_DIR>"
+# Configuration
+SITE_DIR="/app/mon-site"  # Modifier selon le dossier
+REPO_NAME=$(basename "$SITE_DIR")
 
 # Configurer git si nécessaire
 git config --global user.email "deploy@coolify.local" 2>/dev/null
@@ -242,117 +266,3 @@ Exemple de sortie : `SITE_EN_LIGNE: http://c8og44sow8ogso8o8wo4w0kc.158.220.127.
 - Pour un site avec backend (Node, PHP, etc.), un `Dockerfile` doit être présent dans le dossier
 - `build_pack: dockerfile` est le mode recommandé pour un contrôle maximal
 - Les repos GitHub créés sont publics par défaut ; changer `"private": false` en `true` si nécessaire
-
----
-
-## 📜 Script Complet (déploiement en une commande)
-
-```bash
-#!/bin/bash
-# deploy.sh - Déploiement complet d'un site sur Coolify
-
-# Charger les variables d'environnement
-export $(grep -v '^#' /app/.env | xargs)
-
-# Configuration
-SITE_DIR="${1:-/app/mon-site}"  # Premier argument ou défaut
-REPO_NAME=$(basename "$SITE_DIR")
-GITHUB_USER="${GITHUB_USER:-tonyPayetDev}"
-
-echo "🚀 Déploiement de $REPO_NAME"
-
-# 1. Configurer git
-git config --global user.email "deploy@coolify.local" 2>/dev/null || true
-git config --global user.name "Coolify Deploy" 2>/dev/null || true
-
-# 2. Créer le repo GitHub si inexistant
-REPO_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-  -H "Authorization: Bearer $GITHUB_TOKEN" \
-  "https://api.github.com/repos/$GITHUB_USER/$REPO_NAME")
-
-if [ "$REPO_STATUS" = "404" ]; then
-  echo "📦 Création du repo GitHub..."
-  curl -s -X POST \
-    -H "Authorization: Bearer $GITHUB_TOKEN" \
-    -H "Content-Type: application/json" \
-    https://api.github.com/user/repos \
-    -d "{\"name\":\"$REPO_NAME\",\"private\":false,\"auto_init\":false}"
-  sleep 2
-fi
-
-# 3. Push sur GitHub
-cd "$SITE_DIR"
-if [ ! -d ".git" ]; then
-  git init
-  git checkout -b main 2>/dev/null || git checkout -b master
-fi
-
-git add -A
-git commit -m "Deploy: $(date '+%Y-%m-%d %H:%M:%S')" 2>/dev/null || true
-git remote remove origin 2>/dev/null || true
-git remote add origin "https://$GITHUB_TOKEN@github.com/$GITHUB_USER/$REPO_NAME.git"
-git push -u origin main --force 2>&1
-
-# 4. Créer projet Coolify
-PROJECT=$(curl -s -X POST "$COOLIFY_BASE_URL/api/v1/projects" \
-  -H "Authorization: Bearer $COOLIFY_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{\"name\":\"$REPO_NAME\",\"description\":\"Déployé via script\"}")
-PROJECT_UUID=$(echo $PROJECT | grep -o '"uuid":"[^"]*"' | head -1 | cut -d'"' -f4)
-
-# 5. Créer application
-APP=$(curl -s -X POST "$COOLIFY_BASE_URL/api/v1/applications/public" \
-  -H "Authorization: Bearer $COOLIFY_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"project_uuid\": \"$PROJECT_UUID\",
-    \"server_uuid\": \"$COOLIFY_SERVER_UUID\",
-    \"environment_name\": \"production\",
-    \"git_repository\": \"https://github.com/$GITHUB_USER/$REPO_NAME\",
-    \"git_branch\": \"main\",
-    \"build_pack\": \"dockerfile\",
-    \"ports_exposes\": \"80\",
-    \"name\": \"$REPO_NAME\"
-  }")
-APP_UUID=$(echo $APP | grep -o '"uuid":"[^"]*"' | head -1 | cut -d'"' -f4)
-URL=$(echo $APP | grep -o '"domains":"[^"]*"' | cut -d'"' -f4)
-
-# 6. Déployer
-echo "🔄 Déploiement en cours..."
-curl -s -X POST "$COOLIFY_BASE_URL/api/v1/deploy?uuid=$APP_UUID&force=true" \
-  -H "Authorization: Bearer $COOLIFY_ACCESS_TOKEN" > /dev/null
-
-# 7. Polling
-for i in {1..18}; do
-  STATUS=$(curl -s "$COOLIFY_BASE_URL/api/v1/applications/$APP_UUID" \
-    -H "Authorization: Bearer $COOLIFY_ACCESS_TOKEN" | grep -o '"status":"[^"]*"' | head -1)
-  
-  if echo "$STATUS" | grep -q "running"; then
-    echo "✅ Déploiement réussi"
-    break
-  fi
-  
-  echo "  Tentative $i/18..."
-  sleep 10
-done
-
-# 8. Vérification HTTP
-for i in {1..24}; do
-  HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$URL")
-  if [ "$HTTP_CODE" = "200" ]; then
-    echo ""
-    echo "🎉 SITE_EN_LIGNE: $URL"
-    exit 0
-  fi
-  sleep 5
-done
-
-echo "⚠️ Site déployé mais non accessible immédiatement"
-echo "🔗 URL: $URL"
-```
-
-**Utilisation :**
-```bash
-chmod +x deploy.sh
-./deploy.sh /app/mon-site
-```
