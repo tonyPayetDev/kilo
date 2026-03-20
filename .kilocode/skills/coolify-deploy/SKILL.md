@@ -12,34 +12,22 @@ description: >
 
 Déploie un dossier local sur Coolify en passant par un repo GitHub.
 
-## ⚙️ Configuration automatique des variables
+## ⚙️ Configuration des variables d'environnement
 
-**Le skill charge automatiquement les variables depuis `/app/fichier.txt`** si elles ne sont pas déjà définies :
+**Définir les variables d'environnement suivantes sur Coolify** (dans les paramètres de l'application ou du projet) :
 
-```bash
-# Charger automatiquement depuis /app/fichier.txt
-if [ -f "/app/fichier.txt" ]; then
-  # Extraire le token GitHub (première ligne)
-  export GITHUB_TOKEN=$(head -1 /app/fichier.txt)
-  # Extraire le UUID Coolify (ligne avec uuid:)
-  export COOLIFY_SERVER_UUID=$(grep "uuid:" /app/fichier.txt | cut -d: -f2 | tr -d ' ')
-fi
-
-# Valeurs par défaut
-export GITHUB_USER="${GITHUB_USER:-tonyPayetDev}"
-export COOLIFY_BASE_URL="${COOLIFY_BASE_URL:-http://158.220.127.234:8000}"
-export COOLIFY_ACCESS_TOKEN="${COOLIFY_ACCESS_TOKEN:-32|EHh0msiQ6mFH6RdD3w7PRNMswA07HD3WXN7nZiW940ba2077}"
-```
-
-**Si le fichier n'existe pas**, créer `/app/fichier.txt` :
-```
-ghp_votre_token_github
-uuid: c4c0wo4cw8cswkwsooswcc8g
-```
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `GITHUB_TOKEN` | Token GitHub Classic avec scope `repo` | `ghp_votre_token_github` |
+| `GITHUB_USER` | Nom d'utilisateur GitHub | `tonyPayetDev` |
+| `COOLIFY_SERVER_UUID` | UUID du serveur Coolify | `c4c0wo4cw8cswkwsooswcc8g` |
+| `COOLIFY_BASE_URL` | URL de l'instance Coolify | `http://158.220.127.234:8000` |
+| `COOLIFY_ACCESS_TOKEN` | Token API Coolify | `32|EHh0msiQ6mFH6RdD3w7PRNMswA07HD3WXN7nZiW940ba2077` |
 
 > 💡 **Où trouver ces valeurs ?**
 > - **GitHub token** : https://github.com/settings/tokens → "Generate new token (classic)" → scope `repo`
 > - **Coolify Server UUID** : Interface Coolify → Settings → Servers → UUID dans l'URL
+> - **Coolify Access Token** : Interface Coolify → Settings → API Tokens
 >
 > ⚠️ **Important : Utiliser un token CLASSIC GitHub, pas fine-grained !**
 
@@ -65,14 +53,12 @@ uuid: c4c0wo4cw8cswkwsooswcc8g
 ### 2. Vérifier les prérequis
 
 ```bash
-# Charger les variables automatiquement
-if [ -f "/app/fichier.txt" ]; then
-  export GITHUB_TOKEN=$(head -1 /app/fichier.txt)
-  export COOLIFY_SERVER_UUID=$(grep "uuid:" /app/fichier.txt | cut -d: -f2 | tr -d ' ')
-fi
-export GITHUB_USER="${GITHUB_USER:-tonyPayetDev}"
-export COOLIFY_BASE_URL="${COOLIFY_BASE_URL:-http://158.220.127.234:8000}"
-export COOLIFY_ACCESS_TOKEN="${COOLIFY_ACCESS_TOKEN:-32|EHh0msiQ6mFH6RdD3w7PRNMswA07HD3WXN7nZiW940ba2077}"
+# Vérifier que les variables d'environnement sont définies
+[ -z "$GITHUB_TOKEN" ] && { echo "ERREUR: GITHUB_TOKEN non défini"; exit 1; }
+[ -z "$GITHUB_USER" ] && { echo "ERREUR: GITHUB_USER non défini"; exit 1; }
+[ -z "$COOLIFY_SERVER_UUID" ] && { echo "ERREUR: COOLIFY_SERVER_UUID non défini"; exit 1; }
+[ -z "$COOLIFY_BASE_URL" ] && { echo "ERREUR: COOLIFY_BASE_URL non défini"; exit 1; }
+[ -z "$COOLIFY_ACCESS_TOKEN" ] && { echo "ERREUR: COOLIFY_ACCESS_TOKEN non défini"; exit 1; }
 
 # Vérifier que git et curl sont disponibles
 command -v git >/dev/null 2>&1 || { echo "ERREUR: git non installé"; exit 1; }

@@ -1,44 +1,39 @@
 #!/bin/bash
 # deploy.sh - Déploiement complet d'un site sur Coolify
-# Variables chargées automatiquement depuis /app/fichier.txt
+# Variables depuis les variables d'environnement Coolify
 
 # ============================================
-# 1. CHARGEMENT AUTOMATIQUE DES VARIABLES
+# 1. VÉRIFICATION DES VARIABLES D'ENVIRONNEMENT
 # ============================================
 
-# Charger depuis /app/fichier.txt si présent
-if [ -f "/app/fichier.txt" ]; then
-  echo "📂 Chargement des variables depuis /app/fichier.txt..."
-  # Extraire le token GitHub (première ligne non vide)
-  GITHUB_TOKEN_FROM_FILE=$(grep -v '^$' /app/fichier.txt | head -1)
-  # Extraire le UUID Coolify (ligne contenant "uuid:")
-  COOLIFY_SERVER_UUID_FROM_FILE=$(grep "uuid:" /app/fichier.txt | cut -d: -f2 | tr -d ' ')
-  
-  export GITHUB_TOKEN="${GITHUB_TOKEN:-$GITHUB_TOKEN_FROM_FILE}"
-  export COOLIFY_SERVER_UUID="${COOLIFY_SERVER_UUID:-$COOLIFY_SERVER_UUID_FROM_FILE}"
-fi
-
-# Charger depuis .env si présent
-if [ -f "/app/.env" ]; then
-  echo "📂 Chargement des variables depuis /app/.env..."
-  export $(grep -v '^#' /app/.env | xargs)
-fi
-
-# Valeurs par défaut
-export GITHUB_USER="${GITHUB_USER:-tonyPayetDev}"
-export COOLIFY_BASE_URL="${COOLIFY_BASE_URL:-http://158.220.127.234:8000}"
-export COOLIFY_ACCESS_TOKEN="${COOLIFY_ACCESS_TOKEN:-32|EHh0msiQ6mFH6RdD3w7PRNMswA07HD3WXN7nZiW940ba2077}"
-
-# Vérification des variables requises
+# Vérifier que toutes les variables requises sont définies
 if [ -z "$GITHUB_TOKEN" ]; then
   echo "❌ ERREUR: GITHUB_TOKEN non défini"
-  echo "   Créer /app/fichier.txt avec votre token GitHub sur la première ligne"
+  echo "   Définir la variable d'environnement GITHUB_TOKEN dans Coolify"
+  exit 1
+fi
+
+if [ -z "$GITHUB_USER" ]; then
+  echo "❌ ERREUR: GITHUB_USER non défini"
+  echo "   Définir la variable d'environnement GITHUB_USER dans Coolify"
   exit 1
 fi
 
 if [ -z "$COOLIFY_SERVER_UUID" ]; then
   echo "❌ ERREUR: COOLIFY_SERVER_UUID non défini"
-  echo "   Ajouter 'uuid: votre_uuid' dans /app/fichier.txt"
+  echo "   Définir la variable d'environnement COOLIFY_SERVER_UUID dans Coolify"
+  exit 1
+fi
+
+if [ -z "$COOLIFY_BASE_URL" ]; then
+  echo "❌ ERREUR: COOLIFY_BASE_URL non défini"
+  echo "   Définir la variable d'environnement COOLIFY_BASE_URL dans Coolify"
+  exit 1
+fi
+
+if [ -z "$COOLIFY_ACCESS_TOKEN" ]; then
+  echo "❌ ERREUR: COOLIFY_ACCESS_TOKEN non défini"
+  echo "   Définir la variable d'environnement COOLIFY_ACCESS_TOKEN dans Coolify"
   exit 1
 fi
 
