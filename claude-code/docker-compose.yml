@@ -1,0 +1,25 @@
+services:
+  claude-code:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      PASSWORD: ${PASSWORD:?Set a strong PASSWORD in Coolify}
+    expose:
+      - "8080"
+    volumes:
+      - claude-project:/home/coder/project
+      - claude-state:/home/coder/.claude
+      - claude-config:/home/coder/.config
+      - claude-local:/home/coder/.local
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  claude-project:
+  claude-state:
+  claude-config:
+  claude-local:
