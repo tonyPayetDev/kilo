@@ -1,5 +1,11 @@
 FROM codercom/code-server:latest
 
+# Named volumes copy the ownership of these image directories when first created.
+# Without this, they belong to root and code-server cannot write its config.
+USER root
+RUN mkdir -p /home/coder/project /home/coder/.claude /home/coder/.config /home/coder/.local \
+    && chown -R coder:coder /home/coder
+
 USER coder
 WORKDIR /home/coder/project
 

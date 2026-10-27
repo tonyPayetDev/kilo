@@ -14,17 +14,17 @@ services:
     expose:
       - "8080"
     volumes:
-      - claude-project:/home/coder/project
-      - claude-state:/home/coder/.claude
-      - claude-config:/home/coder/.config
-      - claude-local:/home/coder/.local
+      - claude-project-v2:/home/coder/project
+      - claude-state-v2:/home/coder/.claude
+      - claude-config-v2:/home/coder/.config
+      - claude-local-v2:/home/coder/.local
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
 
 volumes:
-  claude-project:
-  claude-state:
-  claude-config:
-  claude-local:
+  claude-project-v2:
+  claude-state-v2:
+  claude-config-v2:
+  claude-local-v2:
