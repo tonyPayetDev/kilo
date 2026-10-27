@@ -4,6 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    # Lancer code-server directement : l'entrypoint de l'image passe par fixuid,
+    # qui ne fonctionne pas avec USER coder ni no-new-privileges.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - test -n "$$PASSWORD" || { echo 'PASSWORD manquant' >&2; exit 1; }; exec code-server --auth password --bind-addr 0.0.0.0:8080 /home/coder/project
     environment:
       PASSWORD: ${PASSWORD:?Set a strong PASSWORD in Coolify}
     expose:
